@@ -1,8 +1,18 @@
 import z from 'zod'
 
-import { signInSchema } from './schemas'
+import {
+  confirmCodeSchema,
+  confirmEmailSchema,
+  registerSchema,
+  resendCodeSchema,
+  signInSchema
+} from './schemas'
 
 export type SignInFormData = z.infer<typeof signInSchema>
+export type RegisterFormData = z.infer<typeof registerSchema>
+export type ConfirmCodeFormData = z.infer<typeof confirmCodeSchema>
+export type ConfirmEmailFormData = z.infer<typeof confirmEmailSchema>
+export type ResendCodeFormData = z.infer<typeof resendCodeSchema>
 
 export type UserRole = 'admin' | 'seller'
 

@@ -10,7 +10,7 @@ const API_BASE_URL = process.env.API_BASE_URL
 const API_VERSION = process.env.API_VERSION
 
 function getAuthToken(cookieStore: Awaited<ReturnType<typeof cookies>>) {
-  const explicitTokenNames = ['accessToken', 'authToken', 'token']
+  const explicitTokenNames = ['authToken', 'accessToken', 'token']
 
   for (const cookieName of explicitTokenNames) {
     const token = cookieStore.get(cookieName)?.value

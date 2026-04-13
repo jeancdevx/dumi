@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { EyeIcon, EyeOffIcon, OctagonAlertIcon } from 'lucide-react'
@@ -61,6 +62,11 @@ const SignInForm = () => {
       if (!result.success) {
         setErrorMessage(result.error || 'Error al iniciar sesión')
         setIsPending(false)
+        return
+      }
+
+      if (result.requiresTenantSetup) {
+        router.push('/tenant/setup')
         return
       }
 
@@ -133,7 +139,9 @@ const SignInForm = () => {
                       className='absolute top-0 right-0 h-full px-3 py-2 hover:bg-transparent'
                       onClick={() => setShowPassword(!showPassword)}
                       aria-label={
-                        showPassword ? 'Hide password' : 'Show password'
+                        showPassword
+                          ? 'Ocultar contrasena'
+                          : 'Mostrar contrasena'
                       }
                     >
                       {showPassword ? (
@@ -180,6 +188,12 @@ const SignInForm = () => {
             {isPending ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </Button>
         </Field>
+        <p className='text-muted-foreground text-sm'>
+          No tienes cuenta?{' '}
+          <Link href='/sign-up' className='font-semibold underline'>
+            Registrate
+          </Link>
+        </p>
       </CardFooter>
     </Card>
   )
