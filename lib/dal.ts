@@ -9,19 +9,35 @@ import type { User, UserRole } from '@/modules/auth/types'
 const API_BASE_URL = process.env.API_BASE_URL
 const API_VERSION = process.env.API_VERSION
 
+function getAuthToken(cookieStore: Awaited<ReturnType<typeof cookies>>) {
+  const explicitTokenNames = ['accessToken', 'authToken', 'token']
+
+  for (const cookieName of explicitTokenNames) {
+    const token = cookieStore.get(cookieName)?.value
+    if (token) {
+      return token
+    }
+  }
+
+  const fallbackTokenCookie = cookieStore
+    .getAll()
+    .find(cookie => cookie.name.toLowerCase().includes('token'))
+
+  return fallbackTokenCookie?.value
+}
+
 async function verifySession() {
   'use cache: private'
   cacheLife('hours')
 
   const cookieStore = await cookies()
-  const accessToken = cookieStore.get('sAccessToken')?.value
-  const frontToken = cookieStore.get('front-token')?.value
+  const accessToken = getAuthToken(cookieStore)
 
-  if (!accessToken || !frontToken) {
+  if (!accessToken) {
     redirect('/sign-in')
   }
 
-  return { isAuth: true, accessToken, frontToken }
+  return { isAuth: true, accessToken }
 }
 
 export async function getUser(): Promise<User> {
@@ -30,7 +46,10 @@ export async function getUser(): Promise<User> {
 
   const session = await verifySession()
   const cookieStore = await cookies()
-  const antiCsrf = cookieStore.get('anti-csrf')?.value
+  const serializedCookies = cookieStore
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join('; ')
 
   try {
     const response = await fetch(
@@ -39,8 +58,8 @@ export async function getUser(): Promise<User> {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Cookie: `sAccessToken=${session.accessToken}`,
-          ...(antiCsrf && { 'anti-csrf': antiCsrf })
+          ...(serializedCookies && { Cookie: serializedCookies }),
+          Authorization: `Bearer ${session.accessToken}`
         }
       }
     )

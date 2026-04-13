@@ -6,7 +6,7 @@ import { signInSchema } from '../schemas'
 
 const API_BASE_URL = process.env.API_BASE_URL
 const API_VERSION = process.env.API_VERSION
-const SUPERTOKENS_API_URL = `${API_BASE_URL}/${API_VERSION}/auth/signin`
+const AUTH_SIGN_IN_URL = `${API_BASE_URL}/${API_VERSION}/auth/signin`
 
 export const signIn = async (formData: FormData) => {
   const email = formData.get('email')
@@ -22,31 +22,21 @@ export const signIn = async (formData: FormData) => {
   }
 
   try {
-    const response = await fetch(SUPERTOKENS_API_URL, {
+    const response = await fetch(AUTH_SIGN_IN_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        rid: 'emailpassword'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        formFields: [
-          { id: 'email', value: parsedData.data.email },
-          { id: 'password', value: parsedData.data.password }
-        ]
+        email: parsedData.data.email,
+        password: parsedData.data.password
       }),
       credentials: 'include'
     })
 
-    const data = await response.json()
+    const data = await response.json().catch(() => null)
 
-    if (data.status === 'WRONG_CREDENTIALS_ERROR') {
-      return {
-        success: false,
-        error: 'Credenciales inválidas. Verifica tu correo y contraseña.'
-      }
-    }
-
-    if (!response.ok || data.status !== 'OK') {
+    if (!response.ok) {
       if (response.status >= 500) {
         return {
           success: false,
@@ -57,7 +47,8 @@ export const signIn = async (formData: FormData) => {
       return {
         success: false,
         error:
-          data.message ||
+          data?.message ||
+          data?.error ||
           'Error al iniciar sesión. Por favor, intenta de nuevo.'
       }
     }
@@ -103,30 +94,9 @@ export const signIn = async (formData: FormData) => {
       )
     }
 
-    const antiCsrf = response.headers.get('anti-csrf')
-    const frontToken = response.headers.get('front-token')
-
-    if (antiCsrf) {
-      cookieStore.set('anti-csrf', antiCsrf, {
-        httpOnly: false,
-        secure: true,
-        sameSite: 'none',
-        path: '/'
-      })
-    }
-
-    if (frontToken) {
-      cookieStore.set('front-token', frontToken, {
-        httpOnly: false,
-        secure: true,
-        sameSite: 'none',
-        path: '/'
-      })
-    }
-
     return {
       success: true,
-      user: data.user
+      user: data?.user || null
     }
   } catch (error) {
     console.error('Error during sign in:', error)

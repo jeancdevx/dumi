@@ -11,7 +11,6 @@ export interface User {
   names: string
   lastNames: string
   email: string
-  superTokensId: string
   createdAt: string
   updatedAt: string
   roles: UserRole[]
