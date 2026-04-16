@@ -1,10 +1,13 @@
 import { getUser, requireAnyRole } from '@/lib/dal'
 
+import { getEmployees } from '@/modules/admin/server/actions'
+
 import { CreateEmployeeModal } from '../components/create-employee-modal'
+import { EmployeeList } from '../components/employee-list'
 
 const AdminView = async () => {
   await requireAnyRole(['owner', 'admin'])
-  const user = await getUser()
+  const [user, employees] = await Promise.all([getUser(), getEmployees()])
 
   return (
     <div className='flex min-h-screen flex-col'>
@@ -23,11 +26,13 @@ const AdminView = async () => {
         </div>
       </header>
 
-      {/* Content placeholder */}
+      {/* Employee table */}
       <main className='flex-1 p-6'>
-        <p className='text-muted-foreground text-sm'>
-          Gestiona los empleados de tu organización desde aquí.
-        </p>
+        <EmployeeList
+          employees={employees}
+          currentUser={user}
+          currentUserRoles={user.roles}
+        />
       </main>
     </div>
   )
