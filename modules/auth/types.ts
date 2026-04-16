@@ -4,7 +4,7 @@ import { signInSchema } from './schemas'
 
 export type SignInFormData = z.infer<typeof signInSchema>
 
-export type UserRole = 'admin' | 'seller'
+export type UserRole = 'owner' | 'admin' | 'seller'
 
 export interface User {
   id: string
