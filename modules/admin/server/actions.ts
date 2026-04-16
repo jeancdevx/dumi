@@ -156,3 +156,52 @@ export async function promoteEmployee(
     }
   }
 }
+
+export async function revokeEmployee(
+  email: string,
+  role: 'SELLER' | 'ADMIN'
+): Promise<ActionResult> {
+  const { accessToken, headers } = await getAuthHeaders()
+
+  if (!accessToken) {
+    return {
+      success: false,
+      error: 'No se encontró sesión activa. Por favor, inicia sesión.'
+    }
+  }
+
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/${API_VERSION}/admin/employees/revoke`,
+      {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ email, role })
+      }
+    )
+
+    const data = await response.json().catch(() => ({}))
+
+    if (response.status === 403) {
+      return {
+        success: false,
+        error: data.message || 'No tienes permisos para realizar esta acción.'
+      }
+    }
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error:
+          data.message || 'Error del servidor. Por favor, intenta más tarde.'
+      }
+    }
+
+    return { success: true, message: data.message }
+  } catch {
+    return {
+      success: false,
+      error: 'Ocurrió un error inesperado. Por favor, intenta de nuevo.'
+    }
+  }
+}

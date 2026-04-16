@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 import { toast } from 'sonner'
 
-import { promoteEmployee } from '@/modules/admin/server/actions'
+import { promoteEmployee, revokeEmployee } from '@/modules/admin/server/actions'
 import type { EmployeeWithRoles } from '@/modules/admin/types'
 import type { UserRole } from '@/modules/auth/types'
 
@@ -64,6 +64,29 @@ const EmployeeRoleSwitches = ({
     setLoadingRole(null)
   }
 
+  const handleRevoke = async (role: DisplayableRole) => {
+    if (loadingRole) return
+    setLoadingRole(role)
+
+    const result = await revokeEmployee(
+      employee.email,
+      role.toUpperCase() as 'SELLER' | 'ADMIN'
+    )
+
+    if (result.success) {
+      setRoles(prev => prev.filter(r => r !== role))
+      toast.success('Rol revocado', {
+        description:
+          result.message ??
+          `Rol ${ROLE_LABELS[role]} removido de ${employee.names}.`
+      })
+    } else {
+      toast.error('Error al revocar rol', { description: result.error })
+    }
+
+    setLoadingRole(null)
+  }
+
   const isSwitchDisabled = (role: DisplayableRole): boolean => {
     if (targetIsOwner) return true
     if (isOwnAccount) return true
@@ -77,7 +100,7 @@ const EmployeeRoleSwitches = ({
       return 'No se pueden modificar los roles del propietario.'
     if (isOwnAccount) return 'No puedes modificar tus propios roles.'
     if (role === 'admin' && !isOwner)
-      return 'Solo el propietario puede asignar el rol Admin.'
+      return 'Solo el propietario puede gestionar el rol Admin.'
     return null
   }
 
@@ -94,10 +117,11 @@ const EmployeeRoleSwitches = ({
             <Switch
               id={`role-${employee.id}-${role}`}
               checked={hasRole}
-              disabled={disabled || hasRole}
-              aria-label={`Asignar rol ${ROLE_LABELS[role]} a ${employee.names}`}
+              disabled={disabled}
+              aria-label={`${hasRole ? 'Revocar' : 'Asignar'} rol ${ROLE_LABELS[role]} a ${employee.names}`}
               onCheckedChange={checked => {
                 if (checked && !hasRole) handlePromote(role)
+                else if (!checked && hasRole) handleRevoke(role)
               }}
               className={isLoading ? 'opacity-50' : ''}
             />
